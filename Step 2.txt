@@ -1,0 +1,20 @@
+/* Source to Staging */
+
+USE GroupDW
+Go
+
+Truncate TABLE STAGE_FACT_ORDERS
+
+Insert into  STAGE_FACT_ORDERS(order_nk_st, c_nk_st, prod_nk_st, City, State, Country , Sales,
+ Quantity, Discount, Profit, ShippingCost, OrderDate, ShipDate, Response,
+CustomerName, Segment, ShipMode, OrderPriority, Category, Sub_Category, ProductName) 
+
+SELECT o.[OrderID], o.[CustomerID], o.[ProductID], o.[City], o.[State], o.[Country],
+o.[Sales], o.[Quantity], o.[Discount], o.[Profit],
+o.[ShippingCost], o.[OrderDate], o.[ShipDate], 
+DATEDIFF(dd, o.[OrderDate], o.[ShipDate]) AS Response,
+o.[CustomerName], o.[Segment], o.[ShipMode], o.[OrderPriority],
+o.[Category], o.[SubCategory], o.[ProductName]
+
+FROM [GroupOP].[dbo].[Orders]  as o 
+WHERE o.[ShipDate] between '01/01/2011' and '12/03/2015'

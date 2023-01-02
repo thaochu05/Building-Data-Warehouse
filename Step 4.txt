@@ -1,0 +1,6 @@
+/* Staging to Fact Table */
+
+
+Insert into Fact_ORDERS (order_dt_wk, ship_dt_wk, c_wk, prod_wk, loc_wk, order_wk, sales, quantity, discount, profit, shipping_cost, response)
+Select order_dt_wk_st, ship_dt_wk_st, c_wk_st, prod_wk_st, loc_wk_st, order_wk_st, Sales, Quantity, Discount, Profit, ShippingCost, Response
+From STAGE_FACT_ORDERS

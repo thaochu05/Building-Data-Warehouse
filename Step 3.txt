@@ -1,0 +1,127 @@
+/* Staging to Dimension Tables */
+/* Prepare Loading to Fact Table. Update the FLAG (record exists) after inserting all dimensions */
+
+
+
+Use GroupDW
+Go
+
+
+Insert into DIM_CUSTOMER(customer_id, customer_name, segment ) 
+
+Select  Distinct c_nk_st, CustomerName, Segment From STAGE_FACT_ORDERS
+where Record_Customer_Exists = 'N'
+
+
+
+/*--------------------------------*/
+
+
+
+Insert into DIM_PRODUCT(product_id, category, sub_category, product_name ) 
+
+Select  Distinct prod_nk_st,  Category, Sub_Category, ProductName From STAGE_FACT_ORDERS
+where Record_Product_Exists = 'N'
+
+/*--------------------------------*/
+
+
+
+Insert into DIM_ORDERS(order_id, ship_mode, order_priority) 
+
+Select  Distinct order_nk_st, ShipMode, OrderPriority From STAGE_FACT_ORDERS
+where Record_Product_Exists = 'N'
+
+
+
+/*--------------------------------*/
+
+
+
+Insert into DIM_Location( city, state, country) 
+
+Select  Distinct  City, State, Country From STAGE_FACT_ORDERS
+where Record_Product_Exists = 'N'
+
+
+/*--------------------------------*/
+
+
+
+UPDATE STAGE_FACT_ORDERS
+SET
+    Record_Product_Exists = 'Y'
+FROM STAGE_FACT_ORDERS S, DIM_PRODUCT P
+WHERE 
+S.prod_nk_st = P.product_id
+
+UPDATE STAGE_FACT_ORDERS
+SET
+    Record_Order_Exists = 'Y'
+FROM STAGE_FACT_ORDERS S, DIM_ORDERS O
+WHERE 
+S.order_nk_st = O.order_id
+
+
+UPDATE STAGE_FACT_ORDERS
+SET
+    Record_Customer_Exists = 'Y'
+FROM STAGE_FACT_ORDERS S, DIM_CUSTOMER C
+WHERE 
+S.c_nk_st = C.customer_id
+
+UPDATE STAGE_FACT_ORDERS
+SET
+    Record_Location_Exists = 'Y'
+FROM STAGE_FACT_ORDERS S, DIM_LOCATION L 
+WHERE 
+ISNULL(S.Country, ' ') = ISNULL(L.country, ' ')  AND
+ISNULL(S.State, ' ') = ISNULL(L.state, ' ')  AND
+ISNULL(S.City, ' ') = ISNULL(L.city, ' ') 
+
+
+
+
+
+Use GroupDW
+Go
+
+UPDATE STAGE_FACT_ORDERS
+SET
+	ship_dt_wk_st = calendar_wk 
+from STAGE_FACT_ORDERS S, DIM_CALENDAR C
+where S.ShipDate = C.calendar_nk
+
+UPDATE STAGE_FACT_ORDERS
+SET
+	order_dt_wk_st = calendar_wk 
+from STAGE_FACT_ORDERS S, DIM_CALENDAR C
+where S.OrderDate = C.calendar_nk
+
+UPDATE STAGE_FACT_ORDERS
+SET
+	loc_wk_st = loc_wk 
+from STAGE_FACT_ORDERS S, DIM_LOCATION L
+WHERE 
+ISNULL(S.Country, ' ') = ISNULL(L.country, ' ')  AND
+ISNULL(S.State, ' ') = ISNULL(L.state, ' ')  AND
+ISNULL(S.City, ' ') = ISNULL(L.city, ' ') 
+
+UPDATE STAGE_FACT_ORDERS
+SET
+	c_wk_st = c_wk 
+from STAGE_FACT_ORDERS S, DIM_CUSTOMER C
+where S.c_nk_st = c.customer_id
+
+
+UPDATE STAGE_FACT_ORDERS
+SET
+	prod_wk_st = prod_wk 
+from STAGE_FACT_ORDERS S, DIM_PRODUCT P
+where S.prod_nk_st = P.product_id
+
+UPDATE STAGE_FACT_ORDERS
+SET
+	order_wk_st = order_wk 
+from STAGE_FACT_ORDERS S, DIM_ORDERS O
+where S.order_nk_st = O.order_id

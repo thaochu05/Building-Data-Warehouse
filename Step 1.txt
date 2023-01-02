@@ -1,0 +1,379 @@
+/* Create tables */
+
+USE  GroupDW
+Go
+
+CREATE TABLE DIM_CALENDAR (
+	calendar_wk 	int 		NOT NULL,
+	calendar_nk	datetime	NULL,
+	full_date 	nvarchar(20)	NULL,
+	day_of_week	tinyint		NULL,
+	day_of_month	tinyint		NULL,
+	day_of_year	smallint	NULL,
+	month_num	tinyint		NULL,
+	month_ldesc	nvarchar(9)	NULL,
+	month_sdesc	nchar(3)	NULL,
+	quarter_num	tinyint		NULL,
+	quarter_ldesc	nvarchar(10)	NULL,
+	quarter_sdesc	nvarchar(10)	NULL,
+	year_num	smallint	NULL,
+	year_sdesc	nchar(4)	NULL
+)
+
+Go
+
+CREATE UNIQUE INDEX IDX_DIM_CALENDAR ON DIM_CALENDAR
+	(
+		calendar_nk
+	)
+Go
+
+ALTER TABLE DIM_CALENDAR
+	ADD PRIMARY KEY (calendar_wk)
+Go
+
+/*-------------------------- */
+/*-------------------------- */
+
+CREATE TABLE DIM_CUSTOMER (
+	c_wk 	int 		IDENTITY,
+	customer_id		nchar(10)	NULL,
+	customer_name	nchar(80)	NOT NULL,
+	segment         nchar(20)    NOT NULL,
+)
+
+GO
+CREATE  INDEX IDX_DIM_CUSTOMER ON DIM_CUSTOMER
+	(
+		customer_id
+	)
+Go
+
+ALTER TABLE DIM_CUSTOMER
+	ADD PRIMARY KEY (c_wk)
+Go
+
+/*-------------------------- */
+/*-------------------------- */
+
+
+CREATE TABLE DIM_LOCATION (
+	loc_wk 		int 		IDENTITY,
+	city			nchar(80)	NULL,
+	state           nchar(80)    NULL,
+	country			nchar(80)	NULL,
+	
+
+)
+
+GO
+CREATE  INDEX IDX_DIM_LOCATION ON DIM_LOCATION
+	(
+		country, 
+		state, 
+		city 
+	)
+Go
+
+ALTER TABLE DIM_LOCATION
+	ADD PRIMARY KEY (loc_wk)
+Go
+
+/*-------------------------- */
+/*-------------------------- */
+
+
+
+
+CREATE TABLE DIM_ORDERS (
+	order_wk 		int 		IDENTITY,
+	
+	order_id	  nchar(30)    NULL,
+	ship_mode	 nchar(20)	NOT NULL,
+	order_priority nchar(20) NOT NULL
+)
+
+GO
+CREATE INDEX IDX_DIM_ORDERS ON DIM_ORDERS
+	(
+		order_id
+	)
+Go
+
+ALTER TABLE DIM_ORDERS
+	ADD PRIMARY KEY (order_wk)
+Go
+
+/*-------------------------- */
+/*-------------------------- */
+
+
+
+
+
+CREATE TABLE DIM_PRODUCT (
+	prod_wk 		int 		IDENTITY,
+	product_id   nchar(30)    NULL,
+	category	 nchar(30)	NULL,
+	sub_category nchar(30)   NULL,
+	product_name nchar(200)   NOT NULL
+)
+
+GO
+
+CREATE INDEX IDX_DIM_PRODUCT ON DIM_PRODUCT
+	(
+		product_id
+	)
+Go
+
+ALTER TABLE DIM_PRODUCT
+	ADD PRIMARY KEY (prod_wk)
+Go
+
+
+
+/*-------------------------- */
+/*-------------------------- */
+
+
+
+CREATE TABLE FACT_ORDERS (
+	
+	c_wk			int			NOT NULL, 
+	prod_wk		    int 		NOT NULL,
+	loc_wk		    int 		NOT NULL,
+	order_wk		int			NOT NULL,
+	order_dt_wk     int         NOT NULL,
+	ship_dt_wk      int         NOT NULL,
+
+	sales		   float        NOT NULL,
+	quantity       int          NOT NULL,
+	discount       float		NOT NULL,
+	profit			float       NOT NULL,
+	shipping_cost   float       NOT NULL,
+	response	  smallint		NULL
+
+)
+
+Go
+
+
+CREATE INDEX IDX_FACT_CUSTOMER_wk ON FACT_ORDERS 
+	(
+		c_wk
+	)
+Go
+
+CREATE INDEX IDX_FACT_LOCATION_wk ON FACT_ORDERS 
+	(
+		loc_wk
+	)
+Go
+
+CREATE INDEX IDX_FACT_ORDER_wk ON FACT_ORDERS 
+	(
+		order_wk
+	)
+Go
+
+CREATE INDEX IDX_FACT_ORDER_DT_wk ON FACT_ORDERS 
+	(
+		order_dt_wk
+	)
+Go
+
+CREATE INDEX IDX_FACT_SHIP_DT_wk ON FACT_ORDERS 
+	(
+		ship_dt_wk
+	)
+Go
+
+CREATE INDEX IDX_FACT_PRODUCT_wk ON FACT_ORDERS 
+	(
+		prod_wk
+	)
+Go
+
+
+
+
+
+/*-------------------------- */
+/*-------------------------- */
+
+/* ADD FOREIGN KEY */
+
+ALTER TABLE FACT_ORDERS	
+	ADD FOREIGN KEY (ship_dt_wk) REFERENCES DIM_CALENDAR
+Go
+
+ALTER TABLE FACT_ORDERS	
+	ADD FOREIGN KEY (ship_dt_wk) REFERENCES DIM_CALENDAR
+Go
+
+ALTER TABLE FACT_ORDERS	
+	ADD FOREIGN KEY (c_wk) REFERENCES DIM_CUSTOMER
+Go
+
+ALTER TABLE FACT_ORDERS	
+	ADD FOREIGN KEY (loc_wk) REFERENCES DIM_LOCATION
+Go
+
+ALTER TABLE FACT_ORDERS	
+	ADD FOREIGN KEY (order_wk) REFERENCES DIM_ORDERS
+Go
+
+
+ALTER TABLE FACT_ORDERS	
+	ADD FOREIGN KEY (prod_wk) REFERENCES DIM_PRODUCT
+Go
+
+
+/*-------------------------------------------------------------------------------*/
+/*-------------------------------------------------------------------------------*/
+/*-------------------------------------------------------------------------------*/
+/*-------------------------------------------------------------------------------*/
+						/* STAGING TABLE */
+
+
+
+CREATE TABLE STAGE_FACT_ORDERS (
+	order_nk_st			nchar(30) 	NOT NULL,
+	c_nk_st		nchar(20)	NOT NULL,
+	prod_nk_st		nchar(30)	    NULL,
+	City	    		nchar(80)	    NULL,
+	State 	    		nchar(80)	    NULL,
+	Country     		nchar(80)   	NULL, 
+
+	order_wk_st		int 		NULL,
+	c_wk_st			int 		NULL,
+	prod_wk_st		int 		NULL,
+	loc_wk_st		int 		NULL,
+	order_dt_wk_st  int			NULL, 
+	ship_dt_wk_st   int			NULL,
+
+
+	OrderDate		datetime	NULL,
+	ShipDate		datetime	NULL,
+	Sales			float 		NULL,
+	Quantity		int		NULL,
+	Discount        	float 		NULL,
+	Profit			float 		NULL,
+	ShippingCost		float 		NULL,
+	Response		smallint 	NULL,
+	CustomerName	nchar(80)	NULL,
+	Segment         nchar(20)   	NULL,
+	ShipMode       nchar(20)	NULL,
+	OrderPriority  nchar(20)   	NULL,
+	Category		nchar(30)	NULL,
+	Sub_Category 	nchar(30)  	NULL,
+	ProductName		nchar(200)	NULL,
+	Record_Location_Exists	Char(1)	Default 'N',
+	Record_Product_Exists	Char(1) Default 'N',
+	Record_Order_Exists	Char(1) Default 'N',
+	Record_Customer_Exists	Char(1) Default 'N'
+
+)
+
+Go
+
+/* Create Index */
+CREATE INDEX IDX_STAGE_ORDERS ON STAGE_FACT_ORDERS
+	(
+		order_nk_st
+	)
+Go
+
+CREATE INDEX IDX_STAGE_PRODUCT ON STAGE_FACT_ORDERS
+	(
+		prod_nk_st
+	)
+Go
+
+CREATE INDEX IDX_STAGE_CUSTOMER ON STAGE_FACT_ORDERS
+	(
+		c_nk_st
+	)
+Go
+
+CREATE INDEX IDX_STAGE_LOCATION ON STAGE_FACT_ORDERS
+	(
+		Country,
+		State, 
+		City 
+	)
+Go
+
+
+
+/*-------------------------------------------------------------------------------*/
+/*-------------------------------------------------------------------------------*/
+/*-------------------------------------------------------------------------------*/
+/*-------------------------------------------------------------------------------*/
+						/* POPULATING DIM_CALENDAR */
+
+INSERT INTO DIM_CALENDAR
+	(calendar_wk, calendar_nk, full_date, month_ldesc, month_sdesc, quarter_ldesc, quarter_sdesc, year_sdesc)
+	VALUES
+	(0, NULL, 'N/A', 'N/A', 'N/A', 'N/A', 'N/A', 'N/A')
+
+
+declare @dtStartDate datetime
+declare @dtEndDate datetime
+declare @dtCurrDate datetime
+
+SELECT @dtStartDate = '01/01/2011'
+SELECT @dtEndDate = '12/03/2015'
+
+SELECT @dtCurrDate = DATEADD(d,1, MAX(calendar_nk))
+FROM DIM_CALENDAR
+WHERE calendar_nk IS NOT NULL
+
+SELECT @dtCurrDate = ISNULL(@dtCurrDate, @dtStartDate)
+
+WHILE @dtCurrDate <= @dtEndDate
+BEGIN
+
+INSERT INTO DIM_CALENDAR
+	(
+	calendar_wk, 
+	calendar_nk, 
+	full_date, 
+	day_of_week,
+	day_of_month,
+	day_of_year,
+	month_num,
+	month_ldesc, 
+	month_sdesc, 
+	quarter_num, 
+	quarter_ldesc, 
+	quarter_sdesc, 
+	year_num,
+	year_sdesc)
+	
+VALUES
+
+	(
+	CONVERT(int, CONVERT(char(8), @dtCurrDate, 112)),
+	@dtCurrDate,
+	DATENAME(month, @dtCurrDate) + ' ' + CONVERT(nvarchar(2), DAY(@dtCurrDate)) + ', ' +  CONVERT(char(4), YEAR(@dtCurrDate)),
+	DATEPART(dw, @dtCurrDate),
+	DATEPART(d, @dtCurrDate),
+	DATEPART(dy, @dtCurrDate),
+	DATEPART(m, @dtCurrDate),
+	SUBSTRING (DATENAME(m, @dtCurrDate),1,3) + ' ' + CONVERT(char(4), YEAR(@dtCurrDate)),
+	SUBSTRING (DATENAME(m, @dtCurrDate),1,3),
+	DATEPART(qq, @dtCurrDate), 
+	'Q' + CONVERT(char(1), DATEPART(qq,@dtCurrDate))+ ' ' + CONVERT(char(4), YEAR(@dtCurrDate)),
+	'Q' + CONVERT(char(1), DATEPART(qq,@dtCurrDate)),
+	YEAR(@dtCurrDate), 
+	CONVERT(char(4), YEAR(@dtCurrDate))
+	)
+
+SELECT @dtCurrDate  = DATEADD(d,1,@dtCurrDate)
+
+END
+
+DELETE FROM DIM_CALENDAR where calendar_wk = 0
+
